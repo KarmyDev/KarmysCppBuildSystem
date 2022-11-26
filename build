@@ -1,0 +1,21 @@
+#!/bin/bash
+echo "Building project..."
+RED='\033[0;35m'
+NC='\033[0m'
+echo -e "Including: ${RED}$(ls ./src/)${NC}"
+echo ""
+
+if [ $1 == "linux" ] 
+then
+echo "Building for Linux..."
+g++ -o ./bin/game ./src/* $(cat build-files/linker-options) && echo "Project builded successfully!"
+fi
+
+if [ $1 == "win64" ]
+then
+echo "Building for Windows..."
+x86_64-w64-mingw32-g++ -o ./bin/windows/game.exe ./src/main.cpp $(cat build-files/linker-options-win64)
+cp ./build-files/mingw-sdl2/bin/SDL2.dll ./bin/windows/
+fi
+
+echo ""
