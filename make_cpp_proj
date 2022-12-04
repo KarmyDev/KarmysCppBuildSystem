@@ -1,0 +1,113 @@
+#!/bin/bash
+
+BUILD_FILE=$(cat <<-END
+#!/bin/bash
+RED='\033[0;35m'
+NC='\033[0m'
+
+if [ "\$1" = "" ];
+then
+    echo -e "\${RED}Usage:\${NC} ./build <architecture>\nAvaliable: linux, win64"
+else
+    echo "Building project..."
+    
+    echo -e "Including: \${RED}\$(ls ./src/)\${NC}"
+    echo ""
+
+    if [ "\$1" = "linux" ];
+    then
+        echo "Building for Linux..."
+        if [ ! -d "./bin/linux/" ]; then
+            mkdir "./bin/linux/"
+        fi
+        g++ -o "./bin/linux/\$(cat .project/executable_name)" ./src/* \$(cat .project/tmp/linux-linker) && echo "Project builded successfully!"
+    fi
+    
+    if [ "\$1" = "win64" ];
+    then
+        echo "Building for Windows..."
+        if [ ! -d "./bin/win64/" ]; then
+            mkdir "./bin/win64/"
+        fi
+        x86_64-w64-mingw32-g++ -o "./bin/win64/\$(cat .project/executable_name).exe"  ./src/* \$(cat .project/tmp/win64-linker) && echo "Project builded successfully!"
+        cp ./build-files/mingw-sdl2/bin/SDL2.dll ./bin/windows/
+    fi
+fi
+echo ""
+END
+)
+
+RUN_FILE=$(cat <<-END
+    #!/bin/bash
+    ./bin/linux/\$(cat .project/executable_name)
+END
+)
+
+# project commands: add <sdl2>, remove <sdl2>
+PROJECT_FILE=$(cat <<-END
+#!/bin/bash
+if [ "\$1" = "add" ]; then
+    if [ "\$2" = "sdl2" ]; then
+        echo "adding sdl2.."
+        paste -d'\0' ".project/linker-options-linux" ".project/sdl2-options-linux" > ".project/tmp/linux-linker"
+        paste -d'\0' ".project/linker-options-win64" ".project/sdl2-options-win64" > ".project/tmp/win64-linker"
+    else
+        echo "no library named \$2"
+    fi
+elif [ "\$1" = "remove" ]; then
+    if [ "\$2" = "sdl2" ]; then
+        echo "removing sdl2.."
+        cat ".project/linker-options-linux" > ".project/tmp/linux-linker"
+        cat ".project/linker-options-win64" > ".project/tmp/win64-linker"
+    else
+        echo "no library named \$2"
+    fi
+elif [ "\$1" = "list" ]; then
+    echo "Avaliable packages: "
+    echo "--------------------"
+    echo "sdl2"
+    echo ""
+else
+    echo "Usage: ./project <command> [<option>]"
+    echo -e "add\t - Adds package"
+    echo -e "remove\t - Removes package"
+    echo -e "list\t - Shows avaliable packages\n"
+fi
+END
+)
+
+if [ "$1" = "" ]; 
+then
+    echo "Usage: make_cpp_proj <project_name> [<executable_name>]"
+else
+    export WORKING_DIR="$(pwd)/$1"
+    if [ -d "$WORKING_DIR" ];
+    then
+        echo "Directory $1 already exists."
+    else
+        echo "Making project $1..."
+        mkdir "$WORKING_DIR" "$WORKING_DIR/.project" "$WORKING_DIR/.project/tmp" "$WORKING_DIR/.project/include" "$WORKING_DIR/bin" "$WORKING_DIR/src" 
+        touch "$WORKING_DIR/build" "$WORKING_DIR/run" "$WORKING_DIR/.project/linker-options-linux" "$WORKING_DIR/.project/linker-options-win64" "$WORKING_DIR/.project/sdl2-options-linux" "$WORKING_DIR/.project/sdl2-options-win64" "$WORKING_DIR/.project/exectuable_name" "$WORKING_DIR/.project/tmp/linux-linker" "$WORKING_DIR/.project/tmp/win64-linker"
+        if [ "$2" = "" ]; then
+            echo "program" > "$WORKING_DIR/.project/executable_name"
+        else
+            echo "$2" > "$WORKING_DIR/.project/executable_name"
+        fi
+        
+        echo " -I/usr/include/SDL2 -lSDL2main -lSDL2 " > "$WORKING_DIR/.project/sdl2-options-linux"
+        echo " " > "$WORKING_DIR/.project/linker-options-linux"
+        
+        echo " -I./build-files/mingw-sdl2/include -lSDL2main -lSDL2 -L./build-files/mingw-sdl2/lib " > "$WORKING_DIR/.project/sdl2-options-win64"
+        echo " -w -Wl,-subsystem,windows -lmingw32 -static-libgcc -static-libstdc++ " > "$WORKING_DIR/.project/linker-options-win64"
+        
+        cat "$WORKING_DIR/.project/linker-options-linux" > "$WORKING_DIR/.project/tmp/linux-linker"
+        cat "$WORKING_DIR/.project/linker-options-win64" > "$WORKING_DIR/.project/tmp/win64-linker"
+        
+        echo "$BUILD_FILE" > "$WORKING_DIR/build"
+        chmod +x "$WORKING_DIR/build"
+        echo "$RUN_FILE" > "$WORKING_DIR/run"
+        chmod +x "$WORKING_DIR/run"
+        echo "$PROJECT_FILE" > "$WORKING_DIR/project"
+        chmod +x "$WORKING_DIR/project"
+    fi
+fi
