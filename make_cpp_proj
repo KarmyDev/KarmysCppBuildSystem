@@ -97,7 +97,7 @@ else
         echo " -I/usr/include/SDL2 -lSDL2main -lSDL2 " > "$WORKING_DIR/.project/sdl2-options-linux"
         echo " " > "$WORKING_DIR/.project/linker-options-linux"
         
-        echo " -I./build-files/mingw-sdl2/include -lSDL2main -lSDL2 -L./build-files/mingw-sdl2/lib " > "$WORKING_DIR/.project/sdl2-options-win64"
+        echo " -I./.project/include/mingw-sdl2/include -lSDL2main -lSDL2 -L./.project/include/mingw-sdl2/lib " > "$WORKING_DIR/.project/sdl2-options-win64"
         echo " -w -Wl,-subsystem,windows -lmingw32 -static-libgcc -static-libstdc++ " > "$WORKING_DIR/.project/linker-options-win64"
         
         cat "$WORKING_DIR/.project/linker-options-linux" > "$WORKING_DIR/.project/tmp/linux-linker"
