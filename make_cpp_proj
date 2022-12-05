@@ -30,7 +30,7 @@ else
             mkdir "./bin/win64/"
         fi
         x86_64-w64-mingw32-g++ -o "./bin/win64/\$(cat .project/executable_name).exe"  ./src/* \$(cat .project/tmp/win64-linker) && echo "Project builded successfully!"
-        cp ./.project/include/mingw-sdl2/bin/SDL2.dll ./bin/win64/
+        cp ./.project/include/mingw-sdl2/bin/SDL2.dll ./bin/windows/
     fi
 fi
 echo ""
@@ -76,6 +76,64 @@ fi
 END
 )
 
+SNAPSHOT_FILE=$(cat <<-END
+#!/bin/bash
+if [ "\$1" = "purge" ];
+then
+	rm -rf "./.snapshots/"
+elif [ "\$1" = "--help" ];
+then
+	echo -e "purge\t-Removes every snapshot"
+elif [ "\$1" = "revert" ];
+then
+	if [ "\$2" = "" ]; then
+		echo "Reverting last reverted snapshot..."
+		if [ -d "./.snapshots/tmp/." ]; then
+			rm -rf "./src/" && mkdir "./src/" && cp -r "./.snapshots/tmp/." "./src/"
+		else
+			echo "No last reverted snapshot found. Aborting."
+		fi
+	else
+		if [ ! -d "./.snapshots/ss_\$2" ]; then
+			echo "Snapshot \$2 doesn't exist yet."
+		else
+			echo "Reverting snapshot \$2..."
+			
+			cp -r "./src/." "./.snapshots/tmp/" && \\
+			rm -rf "./src/" && mkdir "./src/" && cp -r "./.snapshots/ss_\$2/." "./src/"
+			
+			echo "Snapshot \$2 reverted!"
+		fi
+	fi
+elif [ "\$1" = "" ]; then
+	
+	if [ ! -d "./.snapshots/" ]; then
+		mkdir "./.snapshots/"
+	fi
+	
+	NUM=0
+	while [ -d "./.snapshots/ss_\${NUM}" ];
+	do
+	 NUM=\$((\$NUM + 1))
+	done
+	echo "Making snapshot \${NUM}..."
+	cp -r "./src/" "./.snapshots/ss_\${NUM}"
+fi
+END
+)
+
+EXAMPLE_CPP_FILE=$(cat <<-END
+#include <iostream>
+
+// for Windows compilation those args in main() are required
+int main(int argv, char** args)
+{
+    std::cout << "Hello, Karmy's build system!" << std::endl;
+    return 0;
+}
+END
+)
+
 if [ "$1" = "" ]; 
 then
     echo "Usage: make_cpp_proj <project_name> [<executable_name>]"
@@ -109,5 +167,8 @@ else
         chmod +x "$WORKING_DIR/run"
         echo "$PROJECT_FILE" > "$WORKING_DIR/project"
         chmod +x "$WORKING_DIR/project"
+        echo "$SNAPSHOT_FILE" > "$WORKING_DIR/snapshot"
+        chmod +x "$WORKING_DIR/snapshot"
+        echo "$EXAMPLE_CPP_FILE" > "$WORKING_DIR/src/main.cpp"
     fi
 fi
