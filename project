@@ -1,0 +1,28 @@
+#!/bin/bash
+if [ "$1" = "add" ]; then
+    if [ "$2" = "sdl2" ]; then
+        echo "adding sdl2.."
+        paste -d'\0' ".project/linker-options-linux" ".project/sdl2-options-linux" > ".project/tmp/linux-linker"
+        paste -d'\0' ".project/linker-options-win64" ".project/sdl2-options-win64" > ".project/tmp/win64-linker"
+    else
+        echo "no library named $2"
+    fi
+elif [ "$1" = "remove" ]; then
+    if [ "$2" = "sdl2" ]; then
+        echo "removing sdl2.."
+        cat ".project/linker-options-linux" > ".project/tmp/linux-linker"
+        cat ".project/linker-options-win64" > ".project/tmp/win64-linker"
+    else
+        echo "no library named $2"
+    fi
+elif [ "$1" = "list" ]; then
+    echo "Avaliable packages: "
+    echo "--------------------"
+    echo "sdl2"
+    echo ""
+else
+    echo "Usage: ./project <command> [<option>]"
+    echo -e "add\t - Adds package"
+    echo -e "remove\t - Removes package"
+    echo -e "list\t - Shows avaliable packages\n"
+fi

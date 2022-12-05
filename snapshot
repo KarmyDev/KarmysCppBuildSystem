@@ -1,0 +1,41 @@
+#!/bin/bash
+if [ "$1" = "purge" ];
+then
+rm -rf "./.snapshots/"
+elif [ "$1" = "--help" ];
+then
+echo -e "purge\t-Removes every snapshot"
+elif [ "$1" = "revert" ];
+then
+if [ "$2" = "" ]; then
+echo "Reverting last reverted snapshot..."
+if [ -d "./.snapshots/tmp/." ]; then
+rm -rf "./src/" && mkdir "./src/" && cp -r "./.snapshots/tmp/." "./src/"
+else
+echo "No last reverted snapshot found. Aborting."
+fi
+else
+if [ ! -d "./.snapshots/ss_$2" ]; then
+echo "Snapshot $2 doesn't exist yet."
+else
+echo "Reverting snapshot $2..."
+
+cp -r "./src/." "./.snapshots/tmp/" && \			rm -rf "./src/" && mkdir "./src/" && cp -r "./.snapshots/ss_$2/." "./src/"
+
+echo "Snapshot $2 reverted!"
+fi
+fi
+elif [ "$1" = "" ]; then
+
+if [ ! -d "./.snapshots/" ]; then
+mkdir "./.snapshots/"
+fi
+
+NUM=0
+while [ -d "./.snapshots/ss_${NUM}" ];
+do
+ NUM=$(($NUM + 1))
+done
+echo "Making snapshot ${NUM}..."
+cp -r "./src/" "./.snapshots/ss_${NUM}"
+fi

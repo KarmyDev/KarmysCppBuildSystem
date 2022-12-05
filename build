@@ -1,0 +1,33 @@
+#!/bin/bash
+RED='\033[0;35m'
+NC='\033[0m'
+
+if [ "$1" = "" ];
+then
+    echo -e "${RED}Usage:${NC} ./build <architecture>\nAvaliable: linux, win64"
+else
+    echo "Building project..."
+    
+    echo -e "Including: ${RED}$(ls ./src/)${NC}"
+    echo ""
+
+    if [ "$1" = "linux" ];
+    then
+        echo "Building for Linux..."
+        if [ ! -d "./bin/linux/" ]; then
+            mkdir "./bin/linux/"
+        fi
+        g++ -o "./bin/linux/$(cat .project/executable_name)" ./src/* $(cat .project/tmp/linux-linker) && echo "Project builded successfully!"
+    fi
+    
+    if [ "$1" = "win64" ];
+    then
+        echo "Building for Windows..."
+        if [ ! -d "./bin/win64/" ]; then
+            mkdir "./bin/win64/"
+        fi
+        x86_64-w64-mingw32-g++ -o "./bin/win64/$(cat .project/executable_name).exe"  ./src/* $(cat .project/tmp/win64-linker) && echo "Project builded successfully!"
+        cp ./.project/include/mingw-sdl2/bin/SDL2.dll ./bin/windows/
+    fi
+fi
+echo ""
